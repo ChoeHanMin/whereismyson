@@ -8,3 +8,6 @@ export const firebaseConfig = {
   messagingSenderId: '169901474052',
   appId: '1:169901474052:web:f4602792459ec0693f5051',
 };
+
+// 아들 계정의 UID. 이 계정으로 로그인하면 아들 화면, 나머지는 부모님 화면으로 가요.
+export const SON_UID = 'RP50dVDWDvVmaBqcIwcdXqn7GVm2';

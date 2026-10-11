@@ -29,13 +29,15 @@
 3. Android Chrome으로 그 주소를 열고 **⋮ → 홈 화면에 추가**를 누르면 앱처럼 쓸 수 있어요.
 4. 처음 열면 설정 창이 떠요. 어머니 번호, 호칭, 내 이름을 넣어주세요.
 
-## 부모님 화면 (`parents.html`)
+## 로그인과 부모님 화면
 
-부모님은 **https://choehanmin.github.io/whereismyson/parents.html** 에서 등록된 전화번호와 6자리 PIN으로 로그인해요.
-로그인하면 아들이 지금 집인지 밖인지, 누구를 만나 어디 갔는지, 몇 시에 들어오는지를 실시간으로 볼 수 있어요.
-등록되지 않은 번호로는 로그인해도 아무것도 볼 수 없어요.
+가족 모두 **https://choehanmin.github.io/whereismyson/** 에서 등록된 전화번호와 6자리 PIN으로 로그인해요.
 
-아들 앱에서는 ⚙️ 설정 → **부모님 화면 연결**에서 로그인하면, 버튼을 누를 때마다 부모님 화면에도 반영돼요.
+- **아들 번호로 로그인하면** 나가요, 늦어요, 들어왔어요 화면이 나와요. 버튼을 누르면 문자/카톡과 함께 부모님 화면에도 반영돼요.
+- **어머니나 아버지 번호로 로그인하면** 부모님 화면(`parents.html`)으로 넘어가요. 아들이 지금 집인지 밖인지, 누구를 만나 어디 갔는지, 몇 시에 들어오는지를 실시간으로 볼 수 있어요.
+- 등록되지 않은 번호로는 아무것도 볼 수 없어요.
+
+문자는 설정에 넣은 어머니와 아버지 번호로 한 번에 보내요.
 
 ### Firebase 설정 (처음 한 번)
 
@@ -47,8 +49,8 @@
    - 이메일: `전화번호숫자만@whereismyson.app` (예: `01012345678@whereismyson.app`)
    - 비밀번호: 6자리 PIN
 4. **Firestore Database → 데이터베이스 만들기**에서 위치는 `asia-northeast3 (서울)`, 모드는 **프로덕션 모드**로 만들어요.
-5. **Firestore → 규칙** 탭에 [`firestore.rules`](firestore.rules) 내용을 붙여넣어요.
-   `SON_UID`, `MOM_UID`, `DAD_UID`를 3번에서 만든 계정의 **사용자 UID**로 바꾸고 **게시**해요.
+5. **Firestore → 규칙** 탭에 [`firestore.rules`](firestore.rules) 내용을 붙여넣고 **게시**해요.
+   계정을 다시 만들었다면 규칙과 `firebase-config.js`의 `SON_UID`를 새 **사용자 UID**로 바꿔요.
 6. **프로젝트 설정 → 내 앱 → 웹 앱 추가(`</>`)**를 눌러요. 나오는 `firebaseConfig` 값을 [`firebase-config.js`](firebase-config.js)에 넣어요.
 
 ## 로컬 실행

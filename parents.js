@@ -120,6 +120,10 @@ if (!cloud || !cloud.enabled) {
       show('login');
       return;
     }
+    if (cloud.isSon(user)) {
+      location.replace('./');
+      return;
+    }
     show('main');
     unsubs.push(cloud.watchStatus((s) => { lastStatus = s; renderStatus(); }, onDenied));
     unsubs.push(cloud.watchEvents(renderEvents, onDenied));

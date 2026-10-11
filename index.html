@@ -12,10 +12,29 @@
 <body>
   <header class="top">
     <h1>출필고 반필면 <small>出必告 反必面</small></h1>
-    <button id="openSettings" class="icon-btn" aria-label="설정">⚙️</button>
+    <button id="openSettings" class="icon-btn" aria-label="설정" hidden>⚙️</button>
   </header>
 
   <main>
+    <!-- 로그인: 아들이면 이 화면, 부모님이면 parents.html로 이동 -->
+    <section class="panel" id="loginGate" hidden>
+      <h2>🔐 로그인</h2>
+      <p class="note">등록된 전화번호와 PIN으로 로그인해 주세요.</p>
+      <label>전화번호
+        <input id="loginPhone" type="tel" inputmode="numeric" placeholder="010-0000-0000">
+      </label>
+      <label>PIN (6자리)
+        <input id="loginPin" type="password" inputmode="numeric" maxlength="6" placeholder="••••••">
+      </label>
+      <p class="error" id="loginError" hidden></p>
+      <button class="primary" id="loginBtn">로그인</button>
+    </section>
+
+    <section class="panel" id="loading">
+      <p class="note">불러오는 중…</p>
+    </section>
+
+    <div id="sonApp" class="stack" hidden>
     <section class="status-card" id="statusCard">
       <div class="status-emoji" id="statusEmoji">🏠</div>
       <div>
@@ -68,6 +87,7 @@
       <ul id="history" class="history"></ul>
       <button class="text-btn" id="clearHistory">기록 지우기</button>
     </section>
+    </div>
   </main>
 
   <!-- 보내기 시트 -->
@@ -85,10 +105,14 @@
   <!-- 설정 -->
   <dialog id="settingsDialog">
     <h2>설정</h2>
-    <label>어머니 휴대폰 번호
-      <input id="momPhone" type="tel" placeholder="010-1234-5678">
+    <p class="note">문자를 받을 번호예요. 한 명만 넣어도 돼요.</p>
+    <label>어머니 번호
+      <input id="momPhone" type="tel" placeholder="010-0000-0000">
     </label>
-    <label>어머니 호칭
+    <label>아버지 번호
+      <input id="dadPhone" type="tel" placeholder="010-0000-0000">
+    </label>
+    <label>메시지에서 부를 호칭
       <input id="momName" type="text" placeholder="엄마">
     </label>
     <label>내 이름
@@ -100,22 +124,9 @@
     </div>
 
     <hr>
-    <h2>부모님 화면 연결</h2>
-    <div id="cloudOff" class="note">아직 서버(Firebase)가 연결되지 않았어요.</div>
-    <div id="cloudLogin" hidden>
-      <p class="note">로그인하면 나가요·늦어요·들어왔어요가 부모님 화면에도 바로 반영돼요.</p>
-      <label>내 전화번호
-        <input id="loginPhone" type="tel" inputmode="numeric" placeholder="010-0000-0000">
-      </label>
-      <label>PIN (6자리)
-        <input id="loginPin" type="password" inputmode="numeric" maxlength="6" placeholder="••••••">
-      </label>
-      <button class="secondary" id="loginBtn">로그인</button>
-    </div>
-    <div id="cloudUser" hidden>
-      <p class="note">✅ 연결됨: <span id="cloudUserPhone"></span></p>
+    <p class="note" id="cloudUser" hidden>로그인: <span id="cloudUserPhone"></span>
       <button class="text-btn" id="logoutBtn">로그아웃</button>
-    </div>
+    </p>
   </dialog>
 
   <div class="toast" id="toast" hidden></div>

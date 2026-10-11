@@ -26,7 +26,7 @@ function save(key, value) {
 }
 
 let state = load(STATE_KEY, { status: 'home', outing: null, history: [] });
-let settings = load(SETTINGS_KEY, { momPhone: '', momName: '엄마', myName: '' });
+let settings = load(SETTINGS_KEY, { momPhone: '', dadPhone: '', momName: '엄마', myName: '' });
 
 // ---------- 시간 ----------
 
@@ -122,9 +122,14 @@ function publishToCloud(type, text) {
     .catch(() => toast('부모님 화면에 반영하지 못했어요'));
 }
 
+function recipients() {
+  return [settings.momPhone, settings.dadPhone]
+    .map((p) => (p || '').replace(/[^0-9+]/g, ''))
+    .filter(Boolean);
+}
+
 function smsHref(text) {
-  const phone = settings.momPhone.replace(/[^0-9+]/g, '');
-  return `sms:${phone}?body=${encodeURIComponent(text)}`;
+  return `sms:${recipients().join(',')}?body=${encodeURIComponent(text)}`;
 }
 
 async function copy(text) {
@@ -137,8 +142,8 @@ async function copy(text) {
 }
 
 $('sendSms').addEventListener('click', () => {
-  if (!settings.momPhone) {
-    toast('설정에서 어머니 번호를 먼저 넣어주세요');
+  if (recipients().length === 0) {
+    toast('설정에서 받을 번호를 먼저 넣어주세요');
     $('sendDialog').close();
     openSettings();
     return;
@@ -255,6 +260,7 @@ $('clearHistory').addEventListener('click', () => {
 
 function openSettings() {
   $('momPhone').value = settings.momPhone;
+  $('dadPhone').value = settings.dadPhone;
   $('momName').value = settings.momName;
   $('myName').value = settings.myName;
   $('settingsDialog').showModal();
@@ -265,6 +271,7 @@ $('closeSettings').addEventListener('click', () => $('settingsDialog').close());
 $('saveSettings').addEventListener('click', () => {
   settings = {
     momPhone: $('momPhone').value.trim(),
+    dadPhone: $('dadPhone').value.trim(),
     momName: $('momName').value.trim() || '엄마',
     myName: $('myName').value.trim(),
   };
@@ -273,44 +280,107 @@ $('saveSettings').addEventListener('click', () => {
   toast('저장했어요');
 });
 
-// ---------- 부모님 화면 연결 (Firebase) ----------
+// ---------- 로그인 (Firebase) ----------
+// 아들 계정이면 이 화면, 부모님 계정이면 parents.html로 보냄
 
+const ROLE_KEY = 'wims.role';
 let cloud = null;
 
-function renderCloud(user) {
-  const on = !!cloud && cloud.enabled;
-  $('cloudOff').hidden = on;
-  $('cloudLogin').hidden = !on || !!user;
-  $('cloudUser').hidden = !on || !user;
-  if (user) $('cloudUserPhone').textContent = cloud.emailToPhone(user.email);
+function showView(view) {
+  $('loading').hidden = view !== 'loading';
+  $('loginGate').hidden = view !== 'login';
+  $('sonApp').hidden = view !== 'son';
+  $('openSettings').hidden = view !== 'son';
+}
+
+function showSon() {
+  showView('son');
+  render();
+  if (recipients().length === 0) openSettings();
+}
+
+function showLoginError(msg) {
+  $('loginError').textContent = msg;
+  $('loginError').hidden = !msg;
+}
+
+function setRole(role) {
+  try {
+    if (role) localStorage.setItem(ROLE_KEY, role);
+    else localStorage.removeItem(ROLE_KEY);
+  } catch {
+    // 무시
+  }
+}
+
+function getRole() {
+  try {
+    return localStorage.getItem(ROLE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function onUser(user) {
+  if (!user) {
+    setRole(null);
+    $('cloudUser').hidden = true;
+    showView('login');
+    return;
+  }
+  if (!cloud.isSon(user)) {
+    setRole('parent');
+    location.replace('parents.html');
+    return;
+  }
+  setRole('son');
+  $('cloudUserPhone').textContent = cloud.emailToPhone(user.email);
+  $('cloudUser').hidden = false;
+  showSon();
+  // 현재 상태를 한 번 올려서 부모님 화면과 맞춰둠
+  cloud.publish({ status: state.status, outing: state.outing }).catch(() => {});
 }
 
 import('./cloud.js')
   .then((m) => {
     cloud = m;
-    cloud.onUser(renderCloud);
+    if (!cloud.enabled) {
+      showSon();
+      return;
+    }
+    cloud.onUser(onUser);
   })
-  .catch(() => renderCloud(null)); // 오프라인 등으로 못 불러오면 문자/카톡만 사용
+  .catch(() => {
+    // 인터넷이 안 될 때: 아들 폰이면 문자/카톡은 계속 쓸 수 있게
+    if (getRole() === 'son') {
+      showSon();
+    } else {
+      showView('login');
+      showLoginError('서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요');
+    }
+  });
 
 $('loginBtn').addEventListener('click', async () => {
   const phone = $('loginPhone').value;
   const pin = $('loginPin').value;
+  showLoginError('');
   if (!phone || pin.length < 6) {
-    toast('전화번호와 6자리 PIN을 넣어주세요');
+    showLoginError('전화번호와 6자리 PIN을 넣어주세요');
     return;
   }
+  if (!cloud) return;
   try {
     await cloud.login(phone, pin);
     $('loginPin').value = '';
-    toast('연결됐어요');
-    // 연결 직후 현재 상태를 한 번 올려서 부모님 화면을 맞춰둠
-    cloud.publish({ status: state.status, outing: state.outing }).catch(() => {});
   } catch (e) {
-    toast(cloud.loginErrorMessage(e));
+    showLoginError(cloud.loginErrorMessage(e));
   }
 });
 
-$('logoutBtn').addEventListener('click', () => cloud.logout());
+$('logoutBtn').addEventListener('click', () => {
+  $('settingsDialog').close();
+  cloud.logout();
+});
 
 // ---------- 화면 ----------
 
@@ -377,5 +447,3 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
-render();
-if (!settings.momPhone) openSettings();

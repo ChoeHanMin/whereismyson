@@ -1,5 +1,5 @@
 // Firebase 연결: 로그인, 아들 상태 올리기, 부모님 화면에서 실시간으로 보기
-import { firebaseConfig } from './firebase-config.js';
+import { firebaseConfig, SON_UID } from './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut,
@@ -10,6 +10,11 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 export const enabled = !!firebaseConfig;
+export { SON_UID };
+
+export function isSon(user) {
+  return !!user && user.uid === SON_UID;
+}
 
 let auth;
 let db;
