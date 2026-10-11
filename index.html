@@ -98,6 +98,24 @@
       <button class="primary" id="saveSettings">저장</button>
       <button class="text-btn" id="closeSettings">닫기</button>
     </div>
+
+    <hr>
+    <h2>부모님 화면 연결</h2>
+    <div id="cloudOff" class="note">아직 서버(Firebase)가 연결되지 않았어요.</div>
+    <div id="cloudLogin" hidden>
+      <p class="note">로그인하면 나가요·늦어요·들어왔어요가 부모님 화면에도 바로 반영돼요.</p>
+      <label>내 전화번호
+        <input id="loginPhone" type="tel" inputmode="numeric" placeholder="010-0000-0000">
+      </label>
+      <label>PIN (6자리)
+        <input id="loginPin" type="password" inputmode="numeric" maxlength="6" placeholder="••••••">
+      </label>
+      <button class="secondary" id="loginBtn">로그인</button>
+    </div>
+    <div id="cloudUser" hidden>
+      <p class="note">✅ 연결됨: <span id="cloudUserPhone"></span></p>
+      <button class="text-btn" id="logoutBtn">로그아웃</button>
+    </div>
   </dialog>
 
   <div class="toast" id="toast" hidden></div>

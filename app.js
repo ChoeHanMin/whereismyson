@@ -95,10 +95,10 @@ function homeMessage(at) {
 
 // ---------- 보내기 ----------
 
-let pending = null; // { text, apply }
+let pending = null; // { text, apply, type }
 
-function compose(text, apply) {
-  pending = { text, apply };
+function compose(text, apply, type) {
+  pending = { text, apply, type };
   $('preview').textContent = text;
   $('sendDialog').showModal();
 }
@@ -109,9 +109,17 @@ function commit(kind) {
   state.history.unshift({ kind, text: pending.text, at: new Date().toISOString() });
   state.history = state.history.slice(0, HISTORY_LIMIT);
   save(STATE_KEY, state);
+  publishToCloud(pending.type, pending.text);
   pending = null;
   $('sendDialog').close();
   render();
+}
+
+// 부모님 화면에 반영 (로그인했을 때만)
+function publishToCloud(type, text) {
+  if (!cloud || !cloud.currentUser()) return;
+  cloud.publish({ status: state.status, outing: state.outing, type, text })
+    .catch(() => toast('부모님 화면에 반영하지 못했어요'));
 }
 
 function smsHref(text) {
@@ -192,7 +200,7 @@ $('leaveBtn').addEventListener('click', () => {
     $('who').value = '';
     $('where').value = '';
     $('eta').value = '';
-  });
+  }, 'leave');
 });
 
 let lateMinutes = null;
@@ -225,7 +233,7 @@ $('lateBtn').addEventListener('click', () => {
     $('lateReason').value = '';
     lateMinutes = null;
     document.querySelectorAll('[data-late]').forEach((c) => c.classList.remove('selected'));
-  });
+  }, 'late');
 });
 
 $('homeBtn').addEventListener('click', () => {
@@ -233,7 +241,7 @@ $('homeBtn').addEventListener('click', () => {
   compose(homeMessage(at), () => {
     state.status = 'home';
     state.outing = null;
-  });
+  }, 'home');
 });
 
 $('clearHistory').addEventListener('click', () => {
@@ -264,6 +272,45 @@ $('saveSettings').addEventListener('click', () => {
   $('settingsDialog').close();
   toast('저장했어요');
 });
+
+// ---------- 부모님 화면 연결 (Firebase) ----------
+
+let cloud = null;
+
+function renderCloud(user) {
+  const on = !!cloud && cloud.enabled;
+  $('cloudOff').hidden = on;
+  $('cloudLogin').hidden = !on || !!user;
+  $('cloudUser').hidden = !on || !user;
+  if (user) $('cloudUserPhone').textContent = cloud.emailToPhone(user.email);
+}
+
+import('./cloud.js')
+  .then((m) => {
+    cloud = m;
+    cloud.onUser(renderCloud);
+  })
+  .catch(() => renderCloud(null)); // 오프라인 등으로 못 불러오면 문자/카톡만 사용
+
+$('loginBtn').addEventListener('click', async () => {
+  const phone = $('loginPhone').value;
+  const pin = $('loginPin').value;
+  if (!phone || pin.length < 6) {
+    toast('전화번호와 6자리 PIN을 넣어주세요');
+    return;
+  }
+  try {
+    await cloud.login(phone, pin);
+    $('loginPin').value = '';
+    toast('연결됐어요');
+    // 연결 직후 현재 상태를 한 번 올려서 부모님 화면을 맞춰둠
+    cloud.publish({ status: state.status, outing: state.outing }).catch(() => {});
+  } catch (e) {
+    toast(cloud.loginErrorMessage(e));
+  }
+});
+
+$('logoutBtn').addEventListener('click', () => cloud.logout());
 
 // ---------- 화면 ----------
 

@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// Firebase 콘솔 → Firestore Database → 규칙 탭에 붙여넣고 "게시"하세요.
+// UID는 Authentication → 사용자 목록의 "사용자 UID" 값이에요.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSon() {
+      return request.auth != null && request.auth.uid == 'SON_UID';
+    }
+    function isFamily() {
+      return request.auth != null
+        && request.auth.uid in ['SON_UID', 'MOM_UID', 'DAD_UID'];
+    }
+
+    match /status/{doc} {
+      allow read: if isFamily();
+      allow write: if isSon();
+    }
+    match /events/{id} {
+      allow read: if isFamily();
+      allow create: if isSon();
+    }
+  }
+}
