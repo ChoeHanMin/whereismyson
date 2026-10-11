@@ -26,7 +26,9 @@ function save(key, value) {
 }
 
 let state = load(STATE_KEY, { status: 'home', outing: null, history: [] });
-let settings = load(SETTINGS_KEY, { momPhone: '', dadPhone: '', momName: '엄마', myName: '' });
+let settings = load(SETTINGS_KEY, { myName: '' });
+
+const GREETING = '부모님';
 
 // ---------- 시간 ----------
 
@@ -71,7 +73,7 @@ function signature() {
 }
 
 function mom() {
-  return settings.momName || '엄마';
+  return GREETING;
 }
 
 function leaveMessage({ who, where, eta }) {
@@ -123,14 +125,9 @@ function publishToCloud(type, text) {
     .catch(() => toast('부모님 화면에 반영하지 못했어요'));
 }
 
-function recipients() {
-  return [settings.momPhone, settings.dadPhone]
-    .map((p) => (p || '').replace(/[^0-9+]/g, ''))
-    .filter(Boolean);
-}
-
+// 번호는 저장하지 않음: 문자 앱이 열리면 받는 사람은 직접 고름
 function smsHref(text) {
-  return `sms:${recipients().join(',')}?body=${encodeURIComponent(text)}`;
+  return `sms:?body=${encodeURIComponent(text)}`;
 }
 
 async function copy(text) {
@@ -143,12 +140,6 @@ async function copy(text) {
 }
 
 $('sendSms').addEventListener('click', () => {
-  if (recipients().length === 0) {
-    toast('설정에서 받을 번호를 먼저 넣어주세요');
-    $('sendDialog').close();
-    openSettings();
-    return;
-  }
   const href = smsHref(pending.text);
   commit('sms');
   location.href = href;
@@ -279,9 +270,6 @@ $('clearHistory').addEventListener('click', () => {
 // ---------- 설정 ----------
 
 function openSettings() {
-  $('momPhone').value = settings.momPhone;
-  $('dadPhone').value = settings.dadPhone;
-  $('momName').value = settings.momName;
   $('myName').value = settings.myName;
   $('settingsDialog').showModal();
 }
@@ -290,9 +278,6 @@ $('openSettings').addEventListener('click', openSettings);
 $('closeSettings').addEventListener('click', () => $('settingsDialog').close());
 $('saveSettings').addEventListener('click', () => {
   settings = {
-    momPhone: $('momPhone').value.trim(),
-    dadPhone: $('dadPhone').value.trim(),
-    momName: $('momName').value.trim() || '엄마',
     myName: $('myName').value.trim(),
   };
   save(SETTINGS_KEY, settings);
@@ -398,7 +383,8 @@ function showView(view) {
 function showSon() {
   showView('son');
   render();
-  if (recipients().length === 0) openSettings();
+  // 카톡 받는 사람을 아직 안 골랐으면 설정을 열어서 안내
+  if (kakao && kakao.enabled && !kakao.canSend()) openSettings();
 }
 
 function showLoginError(msg) {
