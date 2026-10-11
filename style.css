@@ -165,3 +165,4 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
   border-radius: 999px;
   font-size: 0.9rem;
 }
+.top h1 small { font-size: 0.8rem; font-weight: 500; color: var(--muted); margin-left: 4px; }

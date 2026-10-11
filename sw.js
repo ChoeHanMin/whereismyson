@@ -1,5 +1,5 @@
 // 오프라인에서도 앱이 열리도록 기본 파일을 캐시
-const CACHE = 'wims-v1';
+const CACHE = 'wims-v2';
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (event) => {
