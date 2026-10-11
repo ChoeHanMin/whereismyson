@@ -5,11 +5,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isSon() {
-      return request.auth != null && request.auth.uid == 'RP50dVDWDvVmaBqcIwcdXqn7GVm2';
+      return request.auth != null && request.auth.uid == 'W7n5MUK712X9fBJxdnZYPTSU8mF2';
     }
     function isFamily() {
       return request.auth != null
-        && request.auth.uid in ['RP50dVDWDvVmaBqcIwcdXqn7GVm2', 'ttEzIkPWmTTtobXo3jinq8trhJF2', 'F0QmRpf02Efr6hs4N3o1MCb2aws2'];
+        && request.auth.uid in ['W7n5MUK712X9fBJxdnZYPTSU8mF2', 'pvVkZjnDijZQKLF26nSBteJi0dB3', 'zkPfkzdhqPPNUStWnbLyEQqu8r73'];
     }
 
     match /status/{doc} {

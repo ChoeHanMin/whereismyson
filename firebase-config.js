@@ -10,4 +10,4 @@ export const firebaseConfig = {
 };
 
 // 아들 계정의 UID. 이 계정으로 로그인하면 아들 화면, 나머지는 부모님 화면으로 가요.
-export const SON_UID = 'RP50dVDWDvVmaBqcIwcdXqn7GVm2';
+export const SON_UID = 'W7n5MUK712X9fBJxdnZYPTSU8mF2';
