@@ -25,7 +25,7 @@
 ## 설치 (GitHub Pages)
 
 1. 리포의 **Settings → Pages**에서 **Source**를 `Deploy from a branch`로 바꾸고, 브랜치를 `main`, 폴더를 `/ (root)`로 정해요.
-2. 1~2분 뒤 `https://<아이디>.github.io/Whereismyson/`에서 열려요.
+2. 1~2분 뒤 `https://choehanmin.github.io/whereismyson/`에서 열려요.
 3. Android Chrome으로 그 주소를 열고 **⋮ → 홈 화면에 추가**를 누르면 앱처럼 쓸 수 있어요.
 4. 처음 열면 설정 창이 떠요. 어머니 번호, 호칭, 내 이름을 넣어주세요.
 
