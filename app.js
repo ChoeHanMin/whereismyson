@@ -97,13 +97,44 @@ function homeMessage(at) {
 
 // ---------- 보내기 ----------
 
-let pending = null; // { text, apply, type }
+const PARENTS_URL = new URL('parents.html', location.href).href;
 
-function compose(text, apply, type) {
-  pending = { text, apply, type };
-  $('preview').textContent = text;
-  $('sendShare').textContent = kakao && kakao.canSend() ? '🟡 카톡 자동 전송' : '🟡 카톡으로 공유';
+let pending = null; // { text, apply, type, kakaoFailed }
+let sending = false;
+
+function openSendDialog() {
+  $('preview').textContent = pending.text;
+  const auto = kakao && kakao.canSend() && !pending.kakaoFailed;
+  $('sendShare').textContent = auto ? '🟡 카톡 자동 전송' : '🟡 카톡으로 공유';
   $('sendDialog').showModal();
+}
+
+// 카카오가 연결돼 있으면 창 없이 바로 카톡 전송, 아니면 보내기 창
+function compose(text, apply, type) {
+  if (sending) return;
+  pending = { text, apply, type, kakaoFailed: false };
+  if (kakao && kakao.canSend()) {
+    sendKakao();
+  } else {
+    openSendDialog();
+  }
+}
+
+async function sendKakao() {
+  sending = true;
+  toast('카톡 보내는 중…');
+  try {
+    await kakao.send(pending.text, PARENTS_URL);
+    commit('kakao');
+    toast('부모님께 카톡 보냈어요 ✅');
+  } catch (e) {
+    // 실패하면 다른 방법(공유/문자/복사)으로 보낼 수 있게 창을 띄움
+    toast(kakao.errorMessage(e));
+    pending.kakaoFailed = true;
+    openSendDialog();
+  } finally {
+    sending = false;
+  }
 }
 
 function commit(kind) {
@@ -145,25 +176,11 @@ $('sendSms').addEventListener('click', () => {
   location.href = href;
 });
 
-const PARENTS_URL = new URL('parents.html', location.href).href;
-
 $('sendShare').addEventListener('click', async () => {
   const text = pending.text;
-  // 카카오 연결 + 받는 사람이 정해져 있으면 바로 전송
-  if (kakao && kakao.canSend()) {
-    const btn = $('sendShare');
-    btn.disabled = true;
-    btn.textContent = '보내는 중…';
-    try {
-      await kakao.send(text, PARENTS_URL);
-      commit('kakao');
-      toast('카톡 보냈어요');
-    } catch (e) {
-      toast(kakao.errorMessage(e));
-      btn.textContent = '🟡 카톡으로 공유';
-    } finally {
-      btn.disabled = false;
-    }
+  if (kakao && kakao.canSend() && !pending.kakaoFailed) {
+    $('sendDialog').close();
+    sendKakao();
     return;
   }
   if (navigator.share) {
