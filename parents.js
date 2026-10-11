@@ -7,6 +7,39 @@ try {
   // 인터넷이 안 되거나 Firebase를 못 불러온 경우
 }
 
+// 카카오: 부모님은 한 번 연결만 해두면 아들의 친구 목록에 나타나요
+let kakao = null;
+try {
+  kakao = await import('./kakao.js');
+} catch {
+  // 무시
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 2500);
+}
+
+function renderKakao() {
+  if (!kakao || !kakao.enabled) return;
+  const connected = kakao.isConnected();
+  $('kakaoConnect').hidden = connected;
+  $('kakaoConnected').hidden = !connected;
+}
+
+if (kakao && kakao.enabled) {
+  const result = await kakao.handleRedirect();
+  if (result === 'ok') toast('카카오톡 연결됐어요');
+  else if (result === 'denied') toast('카카오 동의가 취소됐어요');
+  else if (result === 'error') toast('카카오톡 연결에 실패했어요');
+  renderKakao();
+  $('kakaoLoginBtn').addEventListener('click', () => kakao.startLogin());
+}
+
 function fmtTime(date) {
   const d = new Date(date);
   const s = d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
@@ -37,6 +70,7 @@ function show(view) {
   $('statusCard').hidden = view !== 'main';
   $('eventsPanel').hidden = view !== 'main';
   $('logoutBtn').hidden = view !== 'main';
+  $('kakaoPanel').hidden = view !== 'main' || !kakao || !kakao.enabled;
 }
 
 function renderStatus() {

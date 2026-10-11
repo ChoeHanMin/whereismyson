@@ -100,6 +100,7 @@ let pending = null; // { text, apply, type }
 function compose(text, apply, type) {
   pending = { text, apply, type };
   $('preview').textContent = text;
+  $('sendShare').textContent = kakao && kakao.canSend() ? '🟡 카톡 자동 전송' : '🟡 카톡으로 공유';
   $('sendDialog').showModal();
 }
 
@@ -153,8 +154,27 @@ $('sendSms').addEventListener('click', () => {
   location.href = href;
 });
 
+const PARENTS_URL = new URL('parents.html', location.href).href;
+
 $('sendShare').addEventListener('click', async () => {
   const text = pending.text;
+  // 카카오 연결 + 받는 사람이 정해져 있으면 바로 전송
+  if (kakao && kakao.canSend()) {
+    const btn = $('sendShare');
+    btn.disabled = true;
+    btn.textContent = '보내는 중…';
+    try {
+      await kakao.send(text, PARENTS_URL);
+      commit('kakao');
+      toast('카톡 보냈어요');
+    } catch (e) {
+      toast(kakao.errorMessage(e));
+      btn.textContent = '🟡 카톡으로 공유';
+    } finally {
+      btn.disabled = false;
+    }
+    return;
+  }
   if (navigator.share) {
     try {
       await navigator.share({ text });
@@ -280,6 +300,88 @@ $('saveSettings').addEventListener('click', () => {
   toast('저장했어요');
 });
 
+// ---------- 카카오톡 자동 전송 ----------
+
+let kakao = null;
+
+function renderKakao() {
+  const on = !!kakao && kakao.enabled;
+  $('kakaoSection').hidden = !on;
+  if (!on) return;
+  const connected = kakao.isConnected();
+  $('kakaoConnect').hidden = connected;
+  $('kakaoConnected').hidden = !connected;
+  const names = kakao.getRecipients().map((r) => r.name).join(', ');
+  $('kakaoRecipients').textContent = names || '아직 안 골랐어요';
+}
+
+async function pickKakaoRecipients() {
+  const box = $('kakaoFriends');
+  box.hidden = false;
+  box.replaceChildren('불러오는 중…');
+  let list;
+  try {
+    list = await kakao.friends();
+  } catch (e) {
+    box.replaceChildren(kakao.errorMessage(e));
+    return;
+  }
+  if (list.length === 0) {
+    box.replaceChildren('목록이 비어 있어요. 부모님이 부모님 화면에서 "카카오톡 연결"을 먼저 해 주셔야 해요.');
+    return;
+  }
+  const chosen = new Set(kakao.getRecipients().map((r) => r.uuid));
+  box.replaceChildren();
+  for (const f of list) {
+    const label = document.createElement('label');
+    label.className = 'check';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = f.uuid;
+    cb.dataset.name = f.name;
+    cb.checked = chosen.has(f.uuid);
+    label.append(cb, ` ${f.name}`);
+    box.append(label);
+  }
+  const ok = document.createElement('button');
+  ok.className = 'secondary';
+  ok.textContent = '받는 사람 저장';
+  ok.addEventListener('click', () => {
+    const picked = [...box.querySelectorAll('input:checked')].map((c) => ({ uuid: c.value, name: c.dataset.name }));
+    kakao.setRecipients(picked);
+    box.hidden = true;
+    renderKakao();
+    toast('저장했어요');
+  });
+  box.append(ok);
+}
+
+$('kakaoLoginBtn').addEventListener('click', () => kakao.startLogin());
+$('kakaoPickBtn').addEventListener('click', pickKakaoRecipients);
+$('kakaoLogoutBtn').addEventListener('click', () => {
+  kakao.disconnect();
+  $('kakaoFriends').hidden = true;
+  renderKakao();
+});
+
+import('./kakao.js')
+  .then(async (m) => {
+    kakao = m;
+    if (!kakao.enabled) return;
+    const result = await kakao.handleRedirect();
+    renderKakao();
+    if (result === 'ok') {
+      toast('카카오톡 연결됐어요. 받는 사람을 골라주세요');
+      openSettings();
+      pickKakaoRecipients();
+    } else if (result === 'denied') {
+      toast('카카오 동의가 취소됐어요');
+    } else if (result === 'error') {
+      toast('카카오톡 연결에 실패했어요');
+    }
+  })
+  .catch(() => {});
+
 // ---------- 로그인 (Firebase) ----------
 // 아들 계정이면 이 화면, 부모님 계정이면 parents.html로 보냄
 
@@ -393,7 +495,7 @@ function toast(msg) {
   toastTimer = setTimeout(() => { el.hidden = true; }, 2500);
 }
 
-const KIND_LABEL = { sms: '문자', share: '카톡', copy: '복사' };
+const KIND_LABEL = { sms: '문자', kakao: '카톡', share: '카톡 공유', copy: '복사' };
 
 function render() {
   const out = state.status === 'out' && state.outing;

@@ -17,7 +17,7 @@
 | 버튼 | 동작 |
 | --- | --- |
 | 💬 문자로 보내기 | 어머니 번호와 내용이 채워진 문자 앱이 열려요. 전송 버튼만 누르면 돼요. |
-| 🟡 카톡으로 보내기 | Android 공유 창이 열려요. 카카오톡에서 어머니를 고르면 돼요. |
+| 🟡 카톡 자동 전송 | 카카오톡을 연결했으면 부모님께 바로 보내요. 연결하지 않았으면 공유 창이 열려요. |
 | 복사만 하기 | 내용을 클립보드에 복사해요. |
 
 메시지는 내 폰에서 직접 보내요. 비용은 들지 않아요.
@@ -53,6 +53,21 @@
    계정을 다시 만들었다면 규칙과 `firebase-config.js`의 `SON_UID`를 새 **사용자 UID**로 바꿔요.
 6. **프로젝트 설정 → 내 앱 → 웹 앱 추가(`</>`)**를 눌러요. 나오는 `firebaseConfig` 값을 [`firebase-config.js`](firebase-config.js)에 넣어요.
 
+## 카톡 자동 전송 (카카오 친구 메시지)
+
+아들이 버튼을 누르면 아들 카톡 계정으로 부모님 1:1 채팅방에 메시지가 바로 가요.
+
+1. https://developers.kakao.com 에서 **애플리케이션 추가**를 눌러요.
+2. **앱 키**의 **JavaScript 키**와 **REST API 키**를 [`kakao-config.js`](kakao-config.js)에 넣어요.
+3. **플랫폼 → Web**에 사이트 도메인 `https://choehanmin.github.io`를 등록해요.
+4. **카카오 로그인**을 활성화하고, **Redirect URI**에 아래 두 주소를 등록해요.
+   - `https://choehanmin.github.io/whereismyson/`
+   - `https://choehanmin.github.io/whereismyson/parents.html`
+5. **동의항목**에서 **카카오톡 메시지 전송**과 **카카오톡 친구 목록**을 켜요.
+6. **팀 관리**에서 부모님 카카오 계정을 팀원으로 초대해요. 심사 전에는 팀원끼리만 친구 메시지를 주고받을 수 있어요.
+7. 부모님이 부모님 화면에서 **카카오톡 연결**을 한 번 눌러요.
+8. 아들이 ⚙️ 설정 → **카카오톡 연결**을 누른 뒤 **받는 사람**으로 부모님을 골라요.
+
 ## 로컬 실행
 
 ```bash
@@ -67,4 +82,5 @@ python3 -m http.server 8000
 - `index.html`, `style.css`, `app.js`: 앱 본체
 - `parents.html`, `parents.js`: 부모님 화면
 - `cloud.js`, `firebase-config.js`, `firestore.rules`: Firebase 로그인과 실시간 공유
+- `kakao.js`, `kakao-config.js`: 카카오톡 친구 메시지 자동 전송
 - `manifest.webmanifest`, `parents.webmanifest`, `sw.js`, `icon*`: 홈 화면 설치와 오프라인 지원

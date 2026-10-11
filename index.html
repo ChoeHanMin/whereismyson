@@ -96,7 +96,7 @@
     <pre id="preview" class="preview"></pre>
     <div class="send-actions">
       <button class="primary" id="sendSms">💬 문자로 보내기</button>
-      <button class="kakao" id="sendShare">🟡 카톡으로 보내기</button>
+      <button class="kakao" id="sendShare">🟡 카톡으로 공유</button>
       <button class="text-btn" id="copyMsg">복사만 하기</button>
       <button class="text-btn" id="cancelSend">취소</button>
     </div>
@@ -121,6 +121,21 @@
     <div class="send-actions">
       <button class="primary" id="saveSettings">저장</button>
       <button class="text-btn" id="closeSettings">닫기</button>
+    </div>
+
+    <div id="kakaoSection" hidden>
+      <hr>
+      <h2>🟡 카톡 자동 전송</h2>
+      <div id="kakaoConnect">
+        <p class="note">카카오톡을 연결하면 버튼 한 번에 부모님께 카톡이 바로 가요.</p>
+        <button class="kakao" id="kakaoLoginBtn">카카오톡 연결</button>
+      </div>
+      <div id="kakaoConnected" hidden>
+        <p class="note">✅ 연결됨 · 받는 사람: <span id="kakaoRecipients"></span></p>
+        <button class="secondary" id="kakaoPickBtn">받는 사람 고르기</button>
+        <div id="kakaoFriends" class="friends" hidden></div>
+        <button class="text-btn" id="kakaoLogoutBtn">카카오 연결 끊기</button>
+      </div>
     </div>
 
     <hr>
