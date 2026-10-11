@@ -5,7 +5,7 @@ import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
-  getFirestore, doc, setDoc, addDoc, collection, serverTimestamp,
+  getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp,
   onSnapshot, query, orderBy, limit,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
@@ -60,6 +60,16 @@ export function currentUser() {
 export async function publish({ status, outing, type, text }) {
   await setDoc(doc(db, 'status', 'current'), { status, outing, updatedAt: serverTimestamp() });
   if (type) await addDoc(collection(db, 'events'), { type, text, at: serverTimestamp() });
+}
+
+// 아들 쪽: 카카오 연결 정보 (아들만 읽고 쓸 수 있음)
+export async function loadKakao() {
+  const snap = await getDoc(doc(db, 'private', 'kakao'));
+  return snap.exists() ? snap.data() : null;
+}
+
+export function saveKakao(state) {
+  return setDoc(doc(db, 'private', 'kakao'), state);
 }
 
 // 부모님 쪽: 실시간 구독

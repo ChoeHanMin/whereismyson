@@ -20,5 +20,9 @@ service cloud.firestore {
       allow read: if isFamily();
       allow create: if isSon();
     }
+    // 아들의 카카오 연결 정보: 아들만
+    match /private/{doc} {
+      allow read, write: if isSon();
+    }
   }
 }

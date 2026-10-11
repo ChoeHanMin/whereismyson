@@ -106,6 +106,9 @@ function openSendDialog() {
   $('preview').textContent = pending.text;
   const auto = kakao && kakao.canSend() && !pending.kakaoFailed;
   $('sendShare').textContent = auto ? '🟡 카톡 자동 전송' : '🟡 카톡으로 공유';
+  const hint = pending.kakaoFailed ? '카톡 자동 전송에 실패했어요. 다른 방법으로 보내 주세요.' : (kakao ? kakao.whyNotAuto() : '');
+  $('sendHint').textContent = hint;
+  $('sendHint').hidden = !hint;
   $('sendDialog').showModal();
 }
 
@@ -366,7 +369,7 @@ $('kakaoLogoutBtn').addEventListener('click', () => {
   renderKakao();
 });
 
-import('./kakao.js')
+const kakaoReady = import('./kakao.js')
   .then(async (m) => {
     kakao = m;
     if (!kakao.enabled) return;
@@ -384,6 +387,27 @@ import('./kakao.js')
   })
   .catch(() => {});
 
+// 카카오 연결 정보를 서버와 맞춤: 어느 브라우저에서 연결했든 같이 쓰도록
+async function syncKakao() {
+  await kakaoReady.catch(() => {});
+  if (!kakao || !kakao.enabled || !cloud) return;
+  try {
+    const remote = await cloud.loadKakao();
+    const local = kakao.exportState();
+    if (remote && (remote.updatedAt || 0) > (local.updatedAt || 0)) {
+      kakao.importState(remote);
+    } else if (local.updatedAt) {
+      await cloud.saveKakao(local);
+    }
+  } catch {
+    // 서버 규칙이 아직 없거나 오프라인이면 이 브라우저 정보만 사용
+  }
+  kakao.onChange((st) => cloud.saveKakao(st).catch(() => {}));
+  renderKakao();
+  // 서버와 맞춘 뒤에도 카톡 받는 사람이 없으면 설정을 열어서 안내
+  if (!kakao.canSend() && !$('settingsDialog').open) openSettings();
+}
+
 // ---------- 로그인 (Firebase) ----------
 // 아들 계정이면 이 화면, 부모님 계정이면 parents.html로 보냄
 
@@ -400,8 +424,6 @@ function showView(view) {
 function showSon() {
   showView('son');
   render();
-  // 카톡 받는 사람을 아직 안 골랐으면 설정을 열어서 안내
-  if (kakao && kakao.enabled && !kakao.canSend()) openSettings();
 }
 
 function showLoginError(msg) {
@@ -439,6 +461,7 @@ function onUser(user) {
     return;
   }
   setRole('son');
+  syncKakao();
   $('cloudUserPhone').textContent = cloud.emailToPhone(user.email);
   $('cloudUser').hidden = false;
   showSon();

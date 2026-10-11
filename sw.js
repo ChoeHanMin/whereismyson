@@ -1,5 +1,5 @@
 // 오프라인에서도 앱이 열리도록 기본 파일을 캐시
-const CACHE = 'wims-v11';
+const CACHE = 'wims-v12';
 const FILES = [
   './', 'index.html', 'parents.html', 'style.css', 'app.js', 'parents.js', 'cloud.js', 'firebase-config.js', 'kakao.js', 'kakao-config.js',
   'manifest.webmanifest', 'parents.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',

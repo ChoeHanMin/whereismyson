@@ -6,6 +6,7 @@ import { KAKAO_JS_KEY, KAKAO_REST_KEY } from './kakao-config.js';
 const SDK_URL = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
 const TOKEN_KEY = 'wims.kakao.token';
 const RECIPIENTS_KEY = 'wims.kakao.recipients';
+const UPDATED_KEY = 'wims.kakao.updatedAt';
 const STATE = 'wims-kakao';
 const SCOPES = 'talk_message,friends';
 
@@ -29,6 +30,36 @@ function write(key, value) {
   } catch {
     // 무시
   }
+}
+
+// ---------- 다른 브라우저와 맞추기 (서버 저장용) ----------
+// 카카오 로그인이 카톡 앱 안 브라우저로 돌아와도, 크롬/홈 화면 앱에서 같은 연결을 쓰도록
+// 연결 정보와 받는 사람을 내보내고/가져올 수 있게 함
+
+let onChangeCb = null;
+
+export function onChange(cb) {
+  onChangeCb = cb;
+}
+
+function changed() {
+  write(UPDATED_KEY, Date.now());
+  if (onChangeCb) onChangeCb(exportState());
+}
+
+export function exportState() {
+  return {
+    token: read(TOKEN_KEY, null),
+    recipients: read(RECIPIENTS_KEY, []),
+    updatedAt: read(UPDATED_KEY, 0),
+  };
+}
+
+export function importState(st) {
+  if (!st) return;
+  write(TOKEN_KEY, st.token || null);
+  write(RECIPIENTS_KEY, st.recipients || []);
+  write(UPDATED_KEY, st.updatedAt || Date.now());
 }
 
 // ---------- 로그인 ----------
@@ -68,6 +99,7 @@ function saveToken(json) {
     // 갱신할 때는 refresh_token이 안 올 수도 있어서 기존 값 유지
     refresh_token: json.refresh_token || old.refresh_token,
   });
+  changed();
 }
 
 // 카카오 로그인에서 돌아왔으면 토큰을 받아 저장. 결과: null | 'ok' | 'denied' | 'error'
@@ -98,6 +130,7 @@ export function isConnected() {
 export function disconnect() {
   write(TOKEN_KEY, null);
   write(RECIPIENTS_KEY, null);
+  changed();
 }
 
 async function accessToken() {
@@ -112,6 +145,7 @@ async function accessToken() {
   } catch {
     // 갱신 토큰도 만료됨 → 다시 로그인해야 함
     write(TOKEN_KEY, null);
+    changed();
     return null;
   }
 }
@@ -164,10 +198,19 @@ export function getRecipients() {
 
 export function setRecipients(list) {
   write(RECIPIENTS_KEY, list.slice(0, 5)); // 한 번에 최대 5명
+  changed();
 }
 
 export function canSend() {
   return enabled && isConnected() && getRecipients().length > 0;
+}
+
+// 자동 전송이 안 되는 이유 (보내기 창에 안내)
+export function whyNotAuto() {
+  if (!enabled) return '';
+  if (!isConnected()) return '카톡 자동 전송을 쓰려면 ⚙️ 설정에서 "카카오톡 연결"을 해 주세요.';
+  if (getRecipients().length === 0) return '⚙️ 설정에서 카톡 받을 사람을 골라 "받는 사람 저장"을 눌러 주세요.';
+  return '';
 }
 
 export async function send(text, link) {
